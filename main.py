@@ -178,8 +178,7 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
-    page.window.width = 800
-    page.window.height = 600
+  
 
     page.appbar = ft.AppBar(
         title=ft.Text("GAS BOOKING"),
