@@ -2,6 +2,7 @@ import flet as ft
 import sqlitecloud
 import threading
 import time
+import requests
 
 def create_users_table():
     conn = sqlitecloud.connect("sqlitecloud://ce3yvllesk.sqlite.cloud:8860/gas?apikey=kOt8yvfwRbBFka2FXT1Q1ybJKaDEtzTya3SWEGzFbvE")
@@ -50,6 +51,7 @@ def create_bookings_table():
             user_id INTEGER NOT NULL,
             product_id INTEGER NOT NULL,
             status TEXT NOT NULL DEFAULT 'Processing',
+            geolocation TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (product_id) REFERENCES products(id)
         )
@@ -95,10 +97,21 @@ def signin(username, password):
     conn.close()
     return user
 
+
+def get_geolocation():
+    try:
+        response = requests.get('https://ipinfo.io')
+        data = response.json()
+        return data['loc']  # Returns the latitude and longitude as a string "lat,lng"
+    except Exception as e:
+        print(f"Error getting geolocation: {e}")
+        return None
+
 def book_product(user_id, product_id):
+    geolocation = get_geolocation()  # Get the geolocation when booking the product
     conn = sqlitecloud.connect("sqlitecloud://ce3yvllesk.sqlite.cloud:8860/gas?apikey=kOt8yvfwRbBFka2FXT1Q1ybJKaDEtzTya3SWEGzFbvE")
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO bookings (user_id, product_id, status) VALUES (?, ?, ?)', (user_id, product_id, 'Processing'))
+    cursor.execute('INSERT INTO bookings (user_id, product_id, status, geolocation) VALUES (?, ?, ?, ?)', (user_id, product_id, 'Processing', geolocation))
     conn.commit()
     conn.close()
 
@@ -178,8 +191,7 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
-  
-
+   
     page.appbar = ft.AppBar(
         title=ft.Text("GAS BOOKING"),
         center_title=True,
@@ -202,12 +214,14 @@ def main(page: ft.Page):
             threading.Thread(target=poll, daemon=True).start()
         else:
             page.snack_bar = ft.SnackBar(ft.Text("Invalid username or password"), open=True)
+            page.update()  # Ensure the page is updated
 
     def on_signup(e):
         username = username_input.value
         password = password_dropdown.value
         signup(username, password)
         page.snack_bar = ft.SnackBar(ft.Text("Signup successful! Please sign in."), open=True)
+        page.update()  # Ensure the page is updated
 
     username_input = ft.TextField(label="Username")
     password_options = fetch_password_options()
@@ -250,7 +264,6 @@ def main(page: ft.Page):
 
 create_users_table()
 create_password_options_table()
-drop_bookings_table()  # Drop the existing bookings table if it exists
 create_bookings_table()
 
 ft.app(target=main, view=ft.AppView.WEB_BROWSER)
