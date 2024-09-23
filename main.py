@@ -263,6 +263,7 @@ def main(page: ft.Page):
         page.add(auth_form)
 
 create_users_table()
+drop_bookings_table()
 create_password_options_table()
 create_bookings_table()
 
