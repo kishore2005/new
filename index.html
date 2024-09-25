@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Location</title>
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                console.log("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function showPosition(position) {
+            const lat = position.coords.latitude;
+            const long = position.coords.longitude;
+            sendToFlask(lat, long);
+        }
+
+        function sendToFlask(lat, long) {
+            fetch('/location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ latitude: lat, longitude: long })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                window.close();  // Close the window after sending the data
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.close();  // Close the window even if there's an error
+            });
+        }
+
+        // Automatically get location when the page loads
+        window.onload = getLocation;
+    </script>
+</head>
+<body>
+</body>
+</html>
